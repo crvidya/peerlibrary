@@ -1,7 +1,7 @@
-Meteor.publish 'annotations-by-publication', (publication) ->
+Meteor.publish 'annotations-by-publication', (publicationId) ->
   Annotations.find
-    publication: publication
+    'publication.id': publicationId
   ,
     sort: [
-      ['page', 'asc']
+      ['locationStart.pageNumber', 'asc']
     ]

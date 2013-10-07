@@ -479,12 +479,36 @@ class @Annotator
       )
 
   _openActiveHighlight: =>
-    # TODO: Implement
+    assert @_activeHighlightStart
+    assert @_activeHighlightEnd
+
+    [activeHighlightStart, activeHighlightEnd] = @_normalizeActiveHighlightStartEnd()
+
+    publication = Publications.findOne Session.get('currentPublicationId')
+
+    annotation = Annotations.findOne(
+      publication:
+        id: publication._id
+      locationStart: activeHighlightStart
+      locationEnd: activeHighlightEnd
+    )
+
+    if not annotation
+      annotation =
+        publication:
+          id: publication._id
+        body: "Enter annotation"
+        locationStart: activeHighlightStart
+        locationEnd: activeHighlightEnd
+
+      annotation._id = Annotations.insert annotation
+
+    Session.set 'currentAnnotationId', annotation._id
 
   _closeActiveHighlight: =>
     @_hideActiveHiglight()
 
-    # TODO: Implement
+    Session.set 'currentAnnotationId', null
 
   _enableHighligts: (pageNumber) =>
     page = @_pages[pageNumber - 1]

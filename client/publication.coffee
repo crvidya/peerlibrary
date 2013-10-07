@@ -1,5 +1,7 @@
 @SCALE = 1.25
 
+shownPublication = null
+
 class @Publication extends @Publication
   constructor: (args...) ->
     super args...
@@ -38,6 +40,8 @@ class @Publication extends @Publication
       $('#viewer .display-wrapper').empty()
 
       for pageNumber in [1..@_pdf.numPages]
+        Session.set "currentPublicationPageRendered_#{ pageNumber }", false
+
         $canvas = $('<canvas/>').addClass('display-canvas').addClass('display-canvas-loading').data('page-number', pageNumber)
         $loading = $('<div/>').addClass('loading').text("Page #{ pageNumber }")
         $('<div/>').addClass(
@@ -105,6 +109,8 @@ class @Publication extends @Publication
   destroy: =>
     console.debug "Destroying publication #{ @_id }"
 
+    shownPublication = null
+
     pages = @_pages or []
     @_pages = null # To remove references to pdf.js elements to allow cleanup, and as soon as possible as this disables other callbacks
 
@@ -121,6 +127,8 @@ class @Publication extends @Publication
   renderPage: (page) =>
     return if page.rendering
     page.rendering = true
+
+    Session.set "currentPublicationPageRendered_#{ page.page.pageNumber }", true
 
     console.debug "Rendering page #{ page.page.pageNumber }"
 
@@ -200,44 +208,72 @@ Deps.autorun ->
   publication.show()
   Deps.onInvalidate publication.destroy
 
+  shownPublication = publication
+
 Template.publication.publication = ->
   Publications.findOne Session.get 'currentPublicationId'
 
 Template.publicationAnnotations.annotations = ->
   Annotations.find
-    publication: Session.get 'currentPublicationId'
+    'publication.id': Session.get 'currentPublicationId'
   ,
     sort: [
-      ['location.page', 'asc']
-      ['location.start', 'asc']
-      ['location.end', 'asc']
+      ['locationStart.pageNumber', 'asc']
+      ['locationStart.index', 'asc']
+      ['locationEnd.pageNumber', 'asc']
+      ['locationEnd.index', 'asc']
     ]
 
 Template.publicationAnnotationsItem.events =
   'mouseenter .annotation': (e, template) ->
-    currentHighlight = true
-    unless _.isEqual Session.get('currentHighlight'), @location
-      Session.set 'currentHighlight', null
-      currentHighlight = false
+    unless _.isEqual Session.get('currentAnnotationId'), @_id
+      Session.set 'currentAnnotationId', null
 
-    showHighlight $('#viewer .display .display-text').eq(@location.page - 1), @location.start, @location.end, currentHighlight
+    return unless shownPublication
+
+    annotator = shownPublication._annotator
+
+    annotator._activeHighlightStart = @locationStart
+    annotator._activeHighlightEnd = @locationEnd
+
+    annotator._showActiveHighlight()
 
   'mouseleave .annotation': (e, template) ->
-    unless _.isEqual Session.get('currentHighlight'), @location
-      hideHiglight $('#viewer .display .display-text')
+    return if _.isEqual Session.get('currentAnnotationId'), @_id
+
+    return unless shownPublication
+
+    shownPublication._annotator._hideActiveHiglight()
 
   'click .annotation': (e, template) ->
-    currentHighlight = true
-    unless _.isEqual Session.get('currentHighlight'), @location
-      Session.set 'currentHighlight', @location
-      currentHighlight = false
+    unless _.isEqual Session.get('currentAnnotationId'), @_id
+      Session.set 'currentAnnotationId', @_id
 
-    showHighlight $('#viewer .display .display-text').eq(@location.page - 1), @location.start, @location.end, currentHighlight
+    return unless shownPublication
+
+    annotator = shownPublication._annotator
+
+    annotator._activeHighlightStart = @locationStart
+    annotator._activeHighlightEnd = @locationEnd
+
+    annotator._showActiveHighlight()
+
+Template.publicationAnnotationsItem.pageRendered = ->
+  Session.get "currentPublicationPageRendered_#{ @locationStart.pageNumber }"
 
 Template.publicationAnnotationsItem.highlighted = ->
-  currentHighlight = Session.get 'currentHighlight'
+  annotationId = Session.get 'currentAnnotationId'
 
-  currentHighlight?.page is @location.page and currentHighlight?.start is @location.start and currentHighlight?.end is @location.end
+  'highlighted' if @_id is annotationId
+
+Template.publicationAnnotationsItem.top = ->
+  return unless Session.get "currentPublicationPageRendered_#{ @locationStart.pageNumber }"
+
+  $pageCanvas = $("#display-page-#{ @locationStart.pageNumber }")
+
+  return unless $pageCanvas.offset()
+
+  $pageCanvas.offset().top - $('.annotations').offset().top + @locationStart.top
 
 Template.publicationAnnotationsItem.rendered = ->
   $(@findAll '.annotation').data

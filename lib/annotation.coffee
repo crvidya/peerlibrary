@@ -4,11 +4,18 @@ class @Annotation extends @Document
   # created: timestamp of this version
   # author:
   #   username: author's username
-  #   fullName: authors' full name
+  #   displayName: author's display name
   #   id: author's id
   # body: annotation's body
-  # publication: publication's id
-  # location:
-  #   page: one-based
-  #   start: start index of text layer elements of the annotation's highlight (inclusive)
-  #   end: end index of text layer elements of the annotation's highlight (inclusive)
+  # publication:
+  #   id: publication's id
+  # locationStart
+  #   pageNumber: one-based
+  #   index: start index of text layer elements of the annotation's highlight (inclusive)
+  #   left: left coordinate of start of annotation's highlight
+  #   top: top coordinate of start of annotation's highlight
+  # locationEnd
+  #   pageNumber: one-based
+  #   index: end index of text layer elements of the annotation's highlight (inclusive)
+  #   left: left coordinate of end of annotation's highlight
+  #   top: top coordinate of end of annotation's highlight

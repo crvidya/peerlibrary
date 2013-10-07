@@ -51,6 +51,7 @@ Meteor.Router.beforeRouting = ->
   Session.set 'currentPublicationId', null
   Session.set 'currentPublicationSlug', null
   Session.set 'currentPublicationProgress', null
+  Session.set 'currentAnnotationId', null
   Session.set 'currentPersonSlug', null
 
 # TODO: Use real parser (arguments can be listed multiple times, arguments can be delimited by ";")
