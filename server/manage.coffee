@@ -38,6 +38,8 @@ randomTimestamp = ->
 
 Meteor.methods
   'sync-arxiv-pdf-cache': ->
+    return
+
     @unblock()
 
     if not Meteor.settings.AWS
