@@ -357,11 +357,18 @@ Meteor.methods
           created: randomTimestamp()
           author: randomUser()
           body: dimsum.sentence(1 + Random.fraction() * 6).replace /\r/g, '' # There are some \ between paragraphs
-          publication: publication._id
-          location:
-            page: 1
-            start: 3 + i * 15
-            end: 7 + i * 15
+          publication:
+            id: publication._id
+          locationStart:
+            pageNumber: 1
+            index: 3 + i * 15
+            left: 50
+            top: 100 + 137 * i
+          locationEnd:
+            pageNumber: 1
+            index: 7 + i * 15
+            left: 90
+            top: 140 + 137 * i
 
       return # So that for loop does not return anything
 
