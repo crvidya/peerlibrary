@@ -509,6 +509,7 @@ class @Annotator
     @_hideActiveHiglight()
 
     Session.set 'currentAnnotationId', null
+    Session.set 'currentAnnotationEditing', false
 
   _enableHighligts: (pageNumber) =>
     page = @_pages[pageNumber - 1]
@@ -533,6 +534,8 @@ class @Annotator
     $canvas = $("#display-page-#{ pageNumber } canvas")
 
     $canvas.on 'mousedown', (e) =>
+      Session.set 'currentAnnotationEditing', false
+
       offset = $canvas.offset()
       left = e.pageX - offset.left
       top = e.pageY - offset.top

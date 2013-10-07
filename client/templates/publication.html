@@ -34,10 +34,22 @@
 
 <template name="publicationAnnotationsItem">
   {{#if pageRendered}}
-    <li class="annotation {{highlighted}}" style="top: {{top}}px">
-      <div class="text" contenteditable="true">
-        {{body}}
-      </div>
+    <li class="annotation {{highlighted}}" style="top: {{top}}px; z-index: {{zIndex}}">
+      {{#if editing}}
+        <form>
+          <div>
+            <textarea>{{body}}</textarea>
+          </div>
+          <div class="buttons">
+            <button class="save" type="submit">Save</button>
+            <button class="delete">Delete</button>
+          </div>
+          </form>
+      {{else}}
+        <div class="text">
+          {{body}}
+        </div>
+      {{/if}}
     </li>
   {{/if}}
 </template>

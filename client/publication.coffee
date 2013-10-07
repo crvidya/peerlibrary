@@ -226,6 +226,13 @@ Template.publicationAnnotations.annotations = ->
 
 Template.publicationAnnotationsItem.events =
   'mouseenter .annotation': (e, template) ->
+    $annotation = $(template.find('.annotation'))
+    thisZIndex = $annotation.zIndex()
+    maxZIndex = _.max $('.annotations .annotation').not($annotation).map((i, el) -> $(el).zIndex())
+
+    if thisZIndex <= maxZIndex
+      $annotation.zIndex maxZIndex + 1
+
     unless _.isEqual Session.get('currentAnnotationId'), @_id
       Session.set 'currentAnnotationId', null
 
@@ -249,6 +256,8 @@ Template.publicationAnnotationsItem.events =
     unless _.isEqual Session.get('currentAnnotationId'), @_id
       Session.set 'currentAnnotationId', @_id
 
+    Session.set 'currentAnnotationEditing', true
+
     return unless shownPublication
 
     annotator = shownPublication._annotator
@@ -258,6 +267,23 @@ Template.publicationAnnotationsItem.events =
 
     annotator._showActiveHighlight()
 
+  'submit form': (e, template) ->
+    e.preventDefault()
+
+    Annotations.update @_id,
+      $set:
+        body: $(template.find('.annotation textarea')).val()
+
+    Session.set 'currentAnnotationEditing', false
+
+  'click .delete': (e, template) ->
+    e.preventDefault()
+
+    Annotations.remove @_id, (error) ->
+      return unless shownPublication
+
+      shownPublication._annotator._closeActiveHighlight()
+
 Template.publicationAnnotationsItem.pageRendered = ->
   Session.get "currentPublicationPageRendered_#{ @locationStart.pageNumber }"
 
@@ -265,6 +291,11 @@ Template.publicationAnnotationsItem.highlighted = ->
   annotationId = Session.get 'currentAnnotationId'
 
   'highlighted' if @_id is annotationId
+
+Template.publicationAnnotationsItem.editing = ->
+  annotationId = Session.get 'currentAnnotationId'
+
+  @_id is annotationId and Session.get 'currentAnnotationEditing'
 
 Template.publicationAnnotationsItem.top = ->
   return unless Session.get "currentPublicationPageRendered_#{ @locationStart.pageNumber }"
@@ -274,6 +305,14 @@ Template.publicationAnnotationsItem.top = ->
   return unless $pageCanvas.offset()
 
   $pageCanvas.offset().top - $('.annotations').offset().top + @locationStart.top
+
+Template.publicationAnnotationsItem.zIndex = ->
+  annotationId = Session.get 'currentAnnotationId'
+
+  if @_id is annotationId
+    200
+  else
+    100
 
 Template.publicationAnnotationsItem.rendered = ->
   $(@findAll '.annotation').data
